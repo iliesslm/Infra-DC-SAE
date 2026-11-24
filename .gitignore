@@ -1,0 +1,5 @@
+images/common/dc_lab
+images/common/dc_lab.pub
+images/common/authorized_keys
+.build-context/
+captures/

@@ -1,0 +1,3 @@
+---
+snmp_extends:
+  - { name: bgp_established, script: bgp_established.sh }

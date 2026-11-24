@@ -1,0 +1,291 @@
+{
+ "uid": "dc-lab",
+ "title": "Maquette datacenter : fabric EVPN-VXLAN + VPN IPsec",
+ "tags": [
+  "gns3",
+  "evpn",
+  "ipsec"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 39,
+ "version": 1,
+ "refresh": "10s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "templating": {
+  "list": [
+   {
+    "name": "host",
+    "label": "Noeud",
+    "type": "query",
+    "datasource": {
+     "type": "influxdb",
+     "uid": "influx-dc"
+    },
+    "query": "SHOW TAG VALUES FROM \"interface\" WITH KEY = \"hostname\"",
+    "refresh": 2,
+    "includeAll": true,
+    "multi": true,
+    "allValue": ".*",
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    }
+   }
+  ]
+ },
+ "panels": [
+  {
+   "id": 1,
+   "title": "Sessions BGP etablies (attendu : 4 par routeur)",
+   "type": "stat",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 12,
+    "h": 5
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "time_series",
+     "query": "SELECT last(\"bgp_established\") FROM \"dc\" WHERE \"bgp_established\" >= 0 AND $timeFilter GROUP BY \"hostname\"",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 3
+       },
+       {
+        "color": "green",
+        "value": 4
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "colorMode": "background",
+    "textMode": "value_and_name"
+   }
+  },
+  {
+   "id": 2,
+   "title": "Tunnel IPsec : SA IKE / SA ESP installees",
+   "type": "stat",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 0,
+    "w": 12,
+    "h": 5
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "time_series",
+     "query": "SELECT last(\"ike_established\") AS \"IKE\", last(\"child_installed\") AS \"ESP\" FROM \"dc\" WHERE \"ike_established\" >= 0 AND $timeFilter GROUP BY \"hostname\"",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ]
+    },
+    "colorMode": "background",
+    "textMode": "value_and_name"
+   }
+  },
+  {
+   "id": 3,
+   "title": "Debit entrant par interface ($host)",
+   "type": "timeseries",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 12,
+    "h": 9
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "time_series",
+     "query": "SELECT non_negative_derivative(mean(\"ifHCInOctets\"), 1s) * 8 FROM \"interface\" WHERE \"hostname\" =~ /^$host$/ AND \"ifDescr\" =~ /^eth[1-9]/ AND $timeFilter GROUP BY time($__interval), \"hostname\", \"ifDescr\" fill(null)",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bps"
+    },
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 4,
+   "title": "Debit sortant par interface ($host)",
+   "type": "timeseries",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 5,
+    "w": 12,
+    "h": 9
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "time_series",
+     "query": "SELECT non_negative_derivative(mean(\"ifHCOutOctets\"), 1s) * 8 FROM \"interface\" WHERE \"hostname\" =~ /^$host$/ AND \"ifDescr\" =~ /^eth[1-9]/ AND $timeFilter GROUP BY time($__interval), \"hostname\", \"ifDescr\" fill(null)",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bps"
+    },
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 5,
+   "title": "Etat des interfaces (1 = up, 2 = down)",
+   "type": "table",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 14,
+    "w": 12,
+    "h": 9
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "table",
+     "query": "SELECT last(\"ifOperStatus\") AS \"etat\" FROM \"interface\" WHERE \"ifDescr\" =~ /^eth[1-9]/ AND $timeFilter GROUP BY \"hostname\", \"ifDescr\"",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  },
+  {
+   "id": 6,
+   "title": "Sessions BGP dans le temps",
+   "type": "timeseries",
+   "datasource": {
+    "type": "influxdb",
+    "uid": "influx-dc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 14,
+    "w": 12,
+    "h": 9
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "influxdb",
+      "uid": "influx-dc"
+     },
+     "rawQuery": true,
+     "resultFormat": "time_series",
+     "query": "SELECT mean(\"bgp_established\") FROM \"dc\" WHERE \"bgp_established\" >= 0 AND $timeFilter GROUP BY time($__interval), \"hostname\" fill(null)",
+     "refId": "A",
+     "alias": ""
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   },
+   "options": {}
+  }
+ ]
+}

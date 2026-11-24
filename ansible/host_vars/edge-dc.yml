@@ -1,0 +1,13 @@
+---
+lan_if: eth1
+lan_ip: 10.10.10.1/24
+lan_cidr: 10.10.10.0/24
+wan_if: eth2
+wan_ip: 203.0.113.1/24
+remote_cidr: 192.168.50.0/24
+remote_gw: 203.0.113.2
+ipsec_local_ip: 203.0.113.1
+ipsec_local_id: edge-dc
+ipsec_peer_ip: 203.0.113.2
+ipsec_peer_id: edge-branch
+ipsec_initiator: false

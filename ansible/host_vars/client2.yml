@@ -1,0 +1,5 @@
+---
+lan_if: eth1
+lan_ip: 10.10.10.12/24
+gateway: 10.10.10.1
+lan_mtu: "{{ client_mtu }}"

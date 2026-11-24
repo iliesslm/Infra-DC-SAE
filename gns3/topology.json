@@ -1,0 +1,231 @@
+{
+ "project": "dc-lab",
+ "nodes": {
+  "SW-MGMT": {
+   "type": "switch",
+   "ports": 16,
+   "x": 0,
+   "y": -330
+  },
+  "SW-INTERNET": {
+   "type": "switch",
+   "ports": 4,
+   "x": 450,
+   "y": 210
+  },
+  "ansible-ctl": {
+   "image": "dc-ansible:1",
+   "adapters": 1,
+   "env": {
+    "MGMT_IP": "192.168.100.2/24"
+   },
+   "x": -380,
+   "y": -330
+  },
+  "influxdb": {
+   "image": "dc-influxdb:1",
+   "adapters": 1,
+   "env": {
+    "MGMT_IP": "192.168.100.41/24"
+   },
+   "x": -190,
+   "y": -330,
+   "console": "telnet"
+  },
+  "telegraf": {
+   "image": "dc-telegraf:1",
+   "adapters": 1,
+   "env": {
+    "MGMT_IP": "192.168.100.42/24"
+   },
+   "x": 190,
+   "y": -330
+  },
+  "grafana": {
+   "image": "dc-grafana:1",
+   "adapters": 1,
+   "env": {
+    "MGMT_IP": "192.168.100.43/24"
+   },
+   "x": 380,
+   "y": -330,
+   "console": "http",
+   "http_port": 3000
+  },
+  "spine1": {
+   "image": "dc-router:1",
+   "adapters": 3,
+   "env": {
+    "MGMT_IP": "192.168.100.11/24"
+   },
+   "x": -150,
+   "y": -120
+  },
+  "spine2": {
+   "image": "dc-router:1",
+   "adapters": 3,
+   "env": {
+    "MGMT_IP": "192.168.100.12/24"
+   },
+   "x": 150,
+   "y": -120
+  },
+  "leaf1": {
+   "image": "dc-router:1",
+   "adapters": 4,
+   "env": {
+    "MGMT_IP": "192.168.100.21/24"
+   },
+   "x": -150,
+   "y": 40
+  },
+  "leaf2": {
+   "image": "dc-router:1",
+   "adapters": 5,
+   "env": {
+    "MGMT_IP": "192.168.100.22/24"
+   },
+   "x": 150,
+   "y": 40
+  },
+  "client1": {
+   "image": "dc-client:1",
+   "adapters": 2,
+   "env": {
+    "MGMT_IP": "192.168.100.51/24"
+   },
+   "x": -150,
+   "y": 210
+  },
+  "client2": {
+   "image": "dc-client:1",
+   "adapters": 2,
+   "env": {
+    "MGMT_IP": "192.168.100.52/24"
+   },
+   "x": 60,
+   "y": 210
+  },
+  "edge-dc": {
+   "image": "dc-edge:1",
+   "adapters": 3,
+   "env": {
+    "MGMT_IP": "192.168.100.31/24"
+   },
+   "x": 250,
+   "y": 210
+  },
+  "edge-branch": {
+   "image": "dc-edge:1",
+   "adapters": 3,
+   "env": {
+    "MGMT_IP": "192.168.100.32/24"
+   },
+   "x": 650,
+   "y": 210
+  },
+  "client-branch": {
+   "image": "dc-client:1",
+   "adapters": 2,
+   "env": {
+    "MGMT_IP": "192.168.100.53/24"
+   },
+   "x": 850,
+   "y": 210
+  }
+ },
+ "links": [
+  [
+   "ansible-ctl:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "influxdb:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "telegraf:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "grafana:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "spine1:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "spine2:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "leaf1:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "leaf2:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "client1:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "client2:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "edge-dc:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "edge-branch:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "client-branch:eth0",
+   "SW-MGMT"
+  ],
+  [
+   "spine1:eth1",
+   "leaf1:eth1"
+  ],
+  [
+   "spine1:eth2",
+   "leaf2:eth1"
+  ],
+  [
+   "spine2:eth1",
+   "leaf1:eth2"
+  ],
+  [
+   "spine2:eth2",
+   "leaf2:eth2"
+  ],
+  [
+   "leaf1:eth3",
+   "client1:eth1"
+  ],
+  [
+   "leaf2:eth3",
+   "client2:eth1"
+  ],
+  [
+   "leaf2:eth4",
+   "edge-dc:eth1"
+  ],
+  [
+   "edge-dc:eth2",
+   "SW-INTERNET"
+  ],
+  [
+   "edge-branch:eth1",
+   "SW-INTERNET"
+  ],
+  [
+   "edge-branch:eth2",
+   "client-branch:eth1"
+  ]
+ ]
+}

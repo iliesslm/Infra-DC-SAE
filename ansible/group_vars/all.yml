@@ -1,0 +1,8 @@
+---
+mgmt_subnet: 192.168.100.0/24
+snmp_community: dclab
+
+# MTU des liens du fabric. 1500 fonctionne partout dans GNS3 ; mettre 9000 seulement si le
+# serveur GNS3 laisse passer les trames jumbo (voir README). Les clients VXLAN perdent 50 octets.
+underlay_mtu: 1500
+client_mtu: "{{ underlay_mtu | int - 50 }}"

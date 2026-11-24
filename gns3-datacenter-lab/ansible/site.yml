@@ -1,0 +1,100 @@
+---
+# Deploiement complet de la maquette : fabric EVPN-VXLAN, bordures IPsec, postes clients.
+#   cd /ansible && ansible-playbook site.yml
+
+- name: Fabric spine-leaf (underlay eBGP + overlay BGP EVPN/VXLAN)
+  hosts: fabric
+  gather_facts: false
+  tasks:
+    - name: Script reseau (interfaces, bridges, VXLAN)
+      template:
+        src: dc-network.sh.j2
+        dest: /usr/local/bin/dc-network.sh
+        mode: "0755"
+
+    - name: Appliquer la configuration reseau
+      command: /usr/local/bin/dc-network.sh
+      changed_when: false
+
+    - name: Configuration FRR
+      template:
+        src: frr.conf.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: "0640"
+
+    - name: Charger la configuration dans zebra et bgpd
+      shell: vtysh -b 2>&1 | grep -iE "error|unknown command|failure" && exit 1 || exit 0
+      changed_when: false
+
+    - name: Verifier que BGP est configure
+      shell: vtysh -c 'show running-config' | grep -q '^router bgp {{ bgp_asn }}'
+      changed_when: false
+
+    - import_tasks: tasks/snmp.yml
+
+- name: Bordures (pare-feu + tunnel IPsec)
+  hosts: edges
+  gather_facts: false
+  tasks:
+    - name: Script reseau de l'edge
+      template:
+        src: edge-network.sh.j2
+        dest: /usr/local/bin/edge-network.sh
+        mode: "0755"
+
+    - name: Appliquer le reseau de l'edge
+      command: /usr/local/bin/edge-network.sh
+      changed_when: false
+
+    - name: Regles nftables
+      template:
+        src: nftables-edge.nft.j2
+        dest: /etc/dc-nftables.nft
+        mode: "0644"
+
+    - name: Charger le pare-feu
+      command: nft -f /etc/dc-nftables.nft
+      changed_when: false
+
+    - name: Configuration IPsec (ipsec.conf)
+      template:
+        src: ipsec.conf.j2
+        dest: /etc/ipsec.conf
+        mode: "0644"
+      register: ipsec_conf
+
+    - name: Secret IPsec (ipsec.secrets)
+      template:
+        src: ipsec.secrets.j2
+        dest: /etc/ipsec.secrets
+        mode: "0600"
+      register: ipsec_secrets
+
+    - name: (Re)demarrer IPsec si la configuration change
+      shell: ipsec restart >/dev/null 2>&1
+      changed_when: true
+      when: ipsec_conf.changed or ipsec_secrets.changed
+
+    - name: IPsec tourne
+      shell: |
+        if [ -f /run/charon.pid ] && kill -0 "$(cat /run/charon.pid)" 2>/dev/null; then exit 0; fi
+        ipsec start >/dev/null 2>&1
+      changed_when: false
+
+    - import_tasks: tasks/snmp.yml
+
+- name: Postes clients
+  hosts: clients
+  gather_facts: false
+  tasks:
+    - name: Script reseau du poste
+      template:
+        src: client-network.sh.j2
+        dest: /usr/local/bin/client-network.sh
+        mode: "0755"
+
+    - name: Appliquer le reseau du poste
+      command: /usr/local/bin/client-network.sh
+      changed_when: false

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Genere par Ansible - interfaces LAN/WAN et route vers le site distant (idempotent)
+set -e
+ip link set dev lo up
+ip addr replace {{ lan_ip }} dev {{ lan_if }}
+ip link set dev {{ lan_if }} mtu {{ client_mtu if inventory_hostname == 'edge-dc' else 1500 }} up
+ip addr replace {{ wan_ip }} dev {{ wan_if }}
+ip link set dev {{ wan_if }} up
+ip route replace {{ remote_cidr }} via {{ remote_gw }} dev {{ wan_if }}
+echo 1 > /proc/sys/net/ipv4/ip_forward

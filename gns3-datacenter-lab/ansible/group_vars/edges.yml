@@ -1,0 +1,6 @@
+---
+# Secret IPsec du lab. Pour le chiffrer :  ansible-vault encrypt_string 'mon-secret' --name ipsec_psk
+ipsec_psk: "Lab-IPsec-PSK-a-changer-2026"
+snmp_extends:
+  - { name: ike_established, script: ike_established.sh }
+  - { name: child_installed, script: child_installed.sh }

@@ -1,0 +1,12 @@
+---
+loopback_ip: 10.0.0.2
+bgp_asn: 65000
+underlay_interfaces:
+  - { name: eth1, ip: 10.1.2.0/31 }
+  - { name: eth2, ip: 10.1.2.2/31 }
+underlay_neighbors:
+  - { address: 10.1.2.1, remote_as: 65011 }
+  - { address: 10.1.2.3, remote_as: 65012 }
+evpn_neighbors:
+  - { address: 10.0.0.11, remote_as: 65011 }
+  - { address: 10.0.0.12, remote_as: 65012 }

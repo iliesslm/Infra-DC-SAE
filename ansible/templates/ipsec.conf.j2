@@ -1,0 +1,29 @@
+# Genere par Ansible - tunnel IPsec IKEv2 site-a-site
+config setup
+    charondebug="ike 1, knl 1, cfg 0"
+
+conn %default
+    keyexchange=ikev2
+    ike=aes256-sha256-modp2048!
+    esp=aes256-sha256-modp2048!
+    type=tunnel
+    authby=secret
+    dpddelay=10s
+    dpdtimeout=30s
+
+conn dc-branch
+    left={{ ipsec_local_ip }}
+    leftid=@{{ ipsec_local_id }}
+    leftsubnet={{ lan_cidr }}
+    right={{ ipsec_peer_ip }}
+    rightid=@{{ ipsec_peer_id }}
+    rightsubnet={{ remote_cidr }}
+{% if ipsec_initiator %}
+    auto=start
+    dpdaction=restart
+    closeaction=restart
+    keyingtries=%forever
+{% else %}
+    auto=add
+    dpdaction=clear
+{% endif %}

@@ -1,0 +1,29 @@
+---
+# Reseau de gestion : 192.168.100.0/24 (SW-MGMT). Tous les noeuds sont joignables en SSH par cle.
+all:
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: /root/.ssh/id_ed25519
+    ansible_python_interpreter: /usr/bin/python3
+  children:
+    spines:
+      hosts:
+        spine1: { ansible_host: 192.168.100.11 }
+        spine2: { ansible_host: 192.168.100.12 }
+    leafs:
+      hosts:
+        leaf1: { ansible_host: 192.168.100.21 }
+        leaf2: { ansible_host: 192.168.100.22 }
+    fabric:
+      children:
+        spines:
+        leafs:
+    edges:
+      hosts:
+        edge-dc:     { ansible_host: 192.168.100.31 }
+        edge-branch: { ansible_host: 192.168.100.32 }
+    clients:
+      hosts:
+        client1:       { ansible_host: 192.168.100.51 }
+        client2:       { ansible_host: 192.168.100.52 }
+        client-branch: { ansible_host: 192.168.100.53 }

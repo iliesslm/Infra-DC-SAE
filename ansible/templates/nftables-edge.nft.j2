@@ -1,0 +1,31 @@
+#!/usr/sbin/nft -f
+# Genere par Ansible - pare-feu de bordure (politique drop par defaut)
+flush ruleset
+table inet filter {
+  chain input {
+    type filter hook input priority filter; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip protocol icmp accept
+    iifname "eth0" tcp dport 22 accept
+    iifname "eth0" udp dport 161 accept
+    iifname "{{ wan_if }}" udp dport { 500, 4500 } accept
+    iifname "{{ wan_if }}" ip protocol esp accept
+  }
+  chain tunnel-services {
+    meta l4proto icmp accept
+    tcp dport { 22, 80, 443 } accept
+    counter drop
+  }
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+    ct state established,related accept
+    tcp flags syn tcp option maxseg size set rt mtu
+    ip saddr {{ lan_cidr }} ip daddr {{ remote_cidr }} jump tunnel-services
+    ip saddr {{ remote_cidr }} ip daddr {{ lan_cidr }} jump tunnel-services
+    counter drop
+  }
+  chain output {
+    type filter hook output priority filter; policy accept;
+  }
+}

@@ -1,0 +1,8 @@
+# Genere par Ansible
+agentaddress udp:161
+sysName {{ inventory_hostname }}
+sysLocation Maquette GNS3 datacenter
+rocommunity {{ snmp_community }} {{ mgmt_subnet }}
+{% for e in snmp_extends | default([]) %}
+extend {{ e.name }} /usr/local/bin/{{ e.script }}
+{% endfor %}

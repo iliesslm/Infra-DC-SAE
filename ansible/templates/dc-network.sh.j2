@@ -1,0 +1,22 @@
+#!/bin/sh
+# Genere par Ansible - interfaces de l'underlay, bridges et VXLAN des L2VNI (idempotent)
+set -e
+ip link set dev lo up
+ip addr replace {{ loopback_ip }}/32 dev lo
+{% for i in underlay_interfaces %}
+ip link set dev {{ i.name }} mtu {{ underlay_mtu }} up
+{% endfor %}
+{% for v in l2_vnis | default([]) %}
+# --- L2VNI {{ v.vni }} / VLAN {{ v.vlan }} ---
+ip link show br{{ v.vlan }} >/dev/null 2>&1 || ip link add br{{ v.vlan }} type bridge stp_state 0
+ip link show vxlan{{ v.vni }} >/dev/null 2>&1 || ip link add vxlan{{ v.vni }} type vxlan id {{ v.vni }} local {{ loopback_ip }} dstport 4789 nolearning
+ip link set dev vxlan{{ v.vni }} master br{{ v.vlan }}
+ip link set dev vxlan{{ v.vni }} mtu {{ client_mtu }} up
+bridge link set dev vxlan{{ v.vni }} learning off neigh_suppress on
+{% for p in v.ports %}
+ip link set dev {{ p }} master br{{ v.vlan }}
+ip link set dev {{ p }} mtu {{ client_mtu }} up
+{% endfor %}
+ip link set dev br{{ v.vlan }} mtu {{ client_mtu }} up
+{% endfor %}
+sysctl -qw net.ipv4.ip_forward=1 || true

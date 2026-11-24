@@ -1,0 +1,15 @@
+---
+loopback_ip: 10.0.0.12
+bgp_asn: 65012
+underlay_interfaces:
+  - { name: eth1, ip: 10.1.1.3/31 }
+  - { name: eth2, ip: 10.1.2.3/31 }
+underlay_neighbors:
+  - { address: 10.1.1.2, remote_as: 65000 }
+  - { address: 10.1.2.2, remote_as: 65000 }
+evpn_neighbors:
+  - { address: 10.0.0.1, remote_as: 65000 }
+  - { address: 10.0.0.2, remote_as: 65000 }
+# eth3 = client2, eth4 = edge-dc (passerelle du VLAN 10)
+l2_vnis:
+  - { vni: 10010, vlan: 10, ports: [eth3, eth4] }

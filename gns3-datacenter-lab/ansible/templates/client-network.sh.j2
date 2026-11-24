@@ -1,0 +1,6 @@
+#!/bin/sh
+# Genere par Ansible - adresse et route par defaut du poste (idempotent)
+set -e
+ip addr replace {{ lan_ip }} dev {{ lan_if }}
+ip link set dev {{ lan_if }} mtu {{ lan_mtu }} up
+ip route replace default via {{ gateway }} dev {{ lan_if }}

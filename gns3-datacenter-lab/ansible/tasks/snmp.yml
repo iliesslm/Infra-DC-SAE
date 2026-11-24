@@ -1,0 +1,29 @@
+---
+# Supervision SNMP : scripts "extend" + snmpd.conf (relance de snmpd si la config change)
+- name: Scripts SNMP extend
+  copy:
+    src: "{{ item.script }}"
+    dest: "/usr/local/bin/{{ item.script }}"
+    mode: "0755"
+  loop: "{{ snmp_extends }}"
+
+- name: Configuration snmpd
+  template:
+    src: snmpd.conf.j2
+    dest: /etc/snmp/snmpd.conf
+    mode: "0644"
+  register: snmp_conf
+
+- name: (Re)demarrer snmpd
+  shell: |
+    [ -f /run/snmpd.pid ] && kill "$(cat /run/snmpd.pid)" 2>/dev/null || true
+    sleep 1
+    snmpd -C -c /etc/snmp/snmpd.conf -Lf /var/log/snmpd.log -u root -g root -p /run/snmpd.pid
+  changed_when: true
+  when: snmp_conf.changed
+
+- name: snmpd tourne
+  shell: |
+    if [ -f /run/snmpd.pid ] && kill -0 "$(cat /run/snmpd.pid)" 2>/dev/null; then exit 0; fi
+    snmpd -C -c /etc/snmp/snmpd.conf -Lf /var/log/snmpd.log -u root -g root -p /run/snmpd.pid
+  changed_when: false
